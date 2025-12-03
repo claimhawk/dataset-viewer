@@ -1,0 +1,25 @@
+#!/bin/bash
+#
+# Git commit-msg hook to prevent co-author trailers.
+#
+# Copyright (c) 2025 Tylt LLC. All Rights Reserved.
+
+COMMIT_MSG_FILE=$1
+COMMIT_MSG=$(cat "$COMMIT_MSG_FILE")
+
+# Check for co-author patterns
+if echo "$COMMIT_MSG" | grep -iE "^Co-authored-by:|Generated with \[Claude" > /dev/null; then
+    echo ""
+    echo "ERROR: Commit message contains co-author attribution."
+    echo ""
+    echo "Policy: DO NOT CO-AUTHOR COMMITS"
+    echo "Only use the GitHub user's name when committing."
+    echo "Do not attribute commits to AI assistants."
+    echo ""
+    echo "Please remove the following from your commit message:"
+    echo "$COMMIT_MSG" | grep -iE "^Co-authored-by:|Generated with \[Claude"
+    echo ""
+    exit 1
+fi
+
+exit 0

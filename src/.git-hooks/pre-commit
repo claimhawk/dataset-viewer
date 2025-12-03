@@ -1,0 +1,7 @@
+#!/bin/bash
+#
+# Git pre-commit hook - runs quality checks.
+#
+# Copyright (c) 2025 Tylt LLC. All Rights Reserved.
+
+exec ./scripts/pre-commit.sh
