@@ -186,7 +186,7 @@ export function ImageViewer({
   toolCall,
   imageSize,
   tolerance
-}: ImageViewerProps): JSX.Element {
+}: ImageViewerProps): React.ReactElement {
   const canvasRef = useRef<HTMLCanvasElement>(null);
   const containerRef = useRef<HTMLDivElement>(null);
   const [zoomIndex, setZoomIndex] = useState(DEFAULT_ZOOM_INDEX);

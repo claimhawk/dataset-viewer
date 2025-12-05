@@ -103,10 +103,9 @@ export function listGeneratorDatasets(generatorName: string): Dataset[] {
     const datasetPath = path.join(datasetsPath, entry.name);
     const config = readDatasetConfig(datasetPath);
 
-    // Get task types from config or default empty
-    const taskTypes = config?.task_counts
-      ? Object.keys(config.task_counts)
-      : [];
+    // Get task types from config (supports both task_types array and task_counts object)
+    const taskTypes = config?.task_types
+      ?? (config?.task_counts ? Object.keys(config.task_counts) : []);
 
     // Count records from data.jsonl
     const dataJsonlPath = path.join(datasetPath, 'data.jsonl');

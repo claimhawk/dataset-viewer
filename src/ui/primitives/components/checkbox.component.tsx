@@ -16,7 +16,7 @@ export function Checkbox({
   label,
   className = '',
   ...props
-}: CheckboxProps): JSX.Element {
+}: CheckboxProps): React.ReactElement {
   return (
     <label className={`flex items-center gap-2 text-sm text-zinc-300 cursor-pointer ${className}`}>
       <input

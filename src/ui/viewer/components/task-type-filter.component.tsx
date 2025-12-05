@@ -20,7 +20,7 @@ export function TaskTypeFilter({
   taskTypes,
   activeTypes,
   onChange
-}: TaskTypeFilterProps): JSX.Element {
+}: TaskTypeFilterProps): React.ReactElement {
   const [isExpanded, setIsExpanded] = useState(false);
 
   const handleToggle = (taskType: string): void => {

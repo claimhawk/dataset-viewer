@@ -1,5 +1,5 @@
 /**
- * Record navigation component - prev/next buttons with counter.
+ * Record navigation component for URL-based routing.
  *
  * Copyright (c) 2025 Tylt LLC. All Rights Reserved.
  */
@@ -8,23 +8,21 @@
 
 import { Button } from '@/ui/primitives/components/button.component';
 
-interface RecordNavProps {
+interface RecordNavUrlProps {
   currentIndex: number;
   totalCount: number;
   onPrev: () => void;
   onNext: () => void;
-  isLoading?: boolean;
 }
 
-export function RecordNav({
+export function RecordNavUrl({
   currentIndex,
   totalCount,
   onPrev,
-  onNext,
-  isLoading = false
-}: RecordNavProps): React.ReactElement {
-  const canPrev = currentIndex > 0 && !isLoading;
-  const canNext = currentIndex < totalCount - 1 && !isLoading;
+  onNext
+}: RecordNavUrlProps): React.ReactElement {
+  const canPrev = currentIndex > 0;
+  const canNext = currentIndex < totalCount - 1;
   const displayIndex = totalCount > 0 ? currentIndex + 1 : 0;
 
   return (
@@ -42,9 +40,7 @@ export function RecordNav({
       </Button>
 
       <span className="text-sm text-zinc-400 min-w-32 text-center">
-        {isLoading ? (
-          'Loading...'
-        ) : totalCount > 0 ? (
+        {totalCount > 0 ? (
           <>
             Record <span className="text-zinc-100">{displayIndex.toLocaleString()}</span> of{' '}
             <span className="text-zinc-100">{totalCount.toLocaleString()}</span>

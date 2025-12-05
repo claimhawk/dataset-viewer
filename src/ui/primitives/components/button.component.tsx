@@ -36,7 +36,7 @@ export function Button({
   disabled,
   children,
   ...props
-}: ButtonProps): JSX.Element {
+}: ButtonProps): React.ReactElement {
   const baseStyles = 'rounded font-medium transition-colors focus:outline-none focus:ring-2 focus:ring-blue-500 focus:ring-offset-2 focus:ring-offset-zinc-900';
   const disabledStyles = disabled ? 'opacity-50 cursor-not-allowed' : '';
 

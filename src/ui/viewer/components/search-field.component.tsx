@@ -16,7 +16,7 @@ interface SearchFieldProps {
   debounceMs?: number;
 }
 
-function SearchIcon(): JSX.Element {
+function SearchIcon(): React.ReactElement {
   return (
     <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
       <path
@@ -34,7 +34,7 @@ export function SearchField({
   onChange,
   placeholder = 'Search records...',
   debounceMs = 300
-}: SearchFieldProps): JSX.Element {
+}: SearchFieldProps): React.ReactElement {
   const [localValue, setLocalValue] = useState(value);
 
   useEffect(() => {

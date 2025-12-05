@@ -19,6 +19,7 @@ export interface Dataset {
 export interface DatasetConfig {
   name_prefix?: string;
   seed?: number;
+  task_types?: string[];
   task_counts?: Record<string, number>;
   train_split?: number;
   task_distributions?: Record<string, Record<string, number>>;

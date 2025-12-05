@@ -22,7 +22,7 @@ interface SectionProps {
   defaultOpen?: boolean;
 }
 
-function Section({ title, children, defaultOpen = true }: SectionProps): JSX.Element {
+function Section({ title, children, defaultOpen = true }: SectionProps): React.ReactElement {
   const [isOpen, setIsOpen] = useState(defaultOpen);
 
   return (
@@ -53,7 +53,7 @@ function formatCoordinate(coord: [number, number]): string {
 export function RecordDetails({
   record,
   toolCall
-}: RecordDetailsProps): JSX.Element {
+}: RecordDetailsProps): React.ReactElement {
   if (!record) {
     return (
       <aside className="w-96 border-l border-zinc-800 bg-zinc-900 flex items-center justify-center text-zinc-500">
@@ -133,7 +133,7 @@ export function RecordDetails({
       </Section>
 
       {/* Metadata */}
-      <Section title="Metadata" defaultOpen={false}>
+      <Section title="Metadata">
         <div className="space-y-2">
           {record.metadata.task_type && (
             <div className="flex items-center gap-2">

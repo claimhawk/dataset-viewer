@@ -38,7 +38,7 @@ export function DatasetSelector({
   selectedDataset,
   onGeneratorChange,
   onDatasetChange
-}: DatasetSelectorProps): JSX.Element {
+}: DatasetSelectorProps): React.ReactElement {
   const generatorOptions = generators.map(g => ({
     value: g.name,
     label: g.name.replace('-generator', '')

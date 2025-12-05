@@ -41,13 +41,32 @@ src/
     └── viewer/       # Feature-specific components (ImageViewer, RecordNav)
 ```
 
+### URL Routing
+
+The app uses Next.js App Router with URL-based state management:
+
+```
+/                                    # Landing - list all generators
+/[generator]                         # Generator - list datasets
+/[generator]/[dataset]               # Redirects to record 0
+/[generator]/[dataset]/[index]       # Record viewer at specific index
+```
+
+Query parameters for filtering:
+- `?taskTypes=click,type` - filter by task types (comma-separated)
+- `?search=foo` - search within records
+
+Example URLs:
+- `/desktop-generator` - view desktop generator datasets
+- `/desktop-generator/expert--researcher--20250101_120000/42?search=button` - view record 42 with search
+
 ### Data Flow
 
 1. **Startup**: App reads `config/adapters.yaml` from repo root to get dataset naming conventions
 2. **Discovery**: `scan-generators.service.ts` walks `projects/generators/*/datasets/` to find generators and datasets
 3. **Loading**: `read-records.service.ts` reads `data.jsonl` files and parses training records
 4. **API**: Next.js API routes expose `/api/datasets`, `/api/records`, and `/api/image/[...path]`
-5. **UI**: Single-page viewer with dataset selector, task type filter, search, and image viewer with coordinate overlays
+5. **UI**: URL-based navigation with keyboard shortcuts (←/→ for prev/next record)
 
 ### Key Concepts
 
@@ -79,6 +98,15 @@ Key requirements:
 - Maximum cyclomatic complexity: 10
 - Maximum function length: 50 lines
 - Functional components only (React)
+- Copyright header required: `// Copyright (c) 2025 Tylt LLC. All Rights Reserved.`
+
+### Import Aliases
+
+Use `@/*` for imports from `src/`:
+```typescript
+import { Button } from '@/ui/primitives/components/Button';
+import { scanGenerators } from '@/domain/datasets/services/scan-generators.service';
+```
 
 ## Git Commits
 
