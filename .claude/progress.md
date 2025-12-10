@@ -191,3 +191,17 @@ npm run precommit:all    # Check all files
 - JSONL files read synchronously (acceptable for current dataset sizes)
 - Images served via Next.js API routes (could optimize with static serving)
 - No pagination yet (filters reduce dataset size sufficiently)
+
+---
+
+## AI-Assisted Development
+
+Built by 1 developer + AI (Claude Code). 2 commits in 3 days.
+
+### Cost Comparison
+
+- **Traditional:** 1 frontend developer @ $150k/yr for 1-2 weeks = **$3-6k**
+- **Actual:** 1 developer + AI, 3 days = **$500-1k**
+- **Savings: ~85%**
+
+Full dataset browsing UI with URL-based navigation and coordinate overlays.
