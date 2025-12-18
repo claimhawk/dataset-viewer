@@ -1,0 +1,7 @@
+# Ignore files when building Modal image
+.next/
+node_modules/
+.git/
+modal/
+*.log
+.DS_Store

@@ -1,19 +1,19 @@
 /**
- * Scan generators service - lists all generators and their datasets.
+ * Scan datasets service - lists all datasets from Modal volume.
  *
  * Copyright (c) 2025 Tylt LLC. All Rights Reserved.
  */
 
 import fs from 'fs';
 import path from 'path';
-import { getGeneratorsPath, getGeneratorDatasetsPath } from '@/libs/paths/generators-path.lib';
-import { getNamingDelimiter } from '@/libs/config/adapters-config.lib';
+import { getDatasetsRoot, getDatasetPath } from '@/libs/paths/generators-path.lib';
+import { getNamingDelimiter, expertToGenerator } from '@/libs/config/adapters-config.lib';
 import type { Generator } from '../models/generator.model';
 import type { Dataset, DatasetConfig } from '../models/dataset.model';
 
 /**
  * Parse dataset folder name to extract components.
- * Handles both "--" delimiter (new) and "-" delimiter (legacy).
+ * Format: {expert}--{researcher}--{timestamp}
  */
 function parseDatasetName(folderName: string): {
   expert: string;
@@ -22,18 +22,17 @@ function parseDatasetName(folderName: string): {
 } | null {
   const delimiter = getNamingDelimiter();
 
-  // Try new format first: expert--researcher--timestamp
-  const newParts = folderName.split(delimiter);
-  if (newParts.length >= 3) {
+  // Try new format: expert--researcher--timestamp
+  const parts = folderName.split(delimiter);
+  if (parts.length >= 3) {
     return {
-      expert: newParts[0],
-      researcher: newParts[1],
-      timestamp: newParts.slice(2).join(delimiter)
+      expert: parts[0],
+      researcher: parts[1],
+      timestamp: parts.slice(2).join(delimiter)
     };
   }
 
   // Fallback to legacy format: expert-researcher-timestamp (single dash)
-  // Find the timestamp at the end (YYYYMMDD_HHMMSS pattern)
   const timestampMatch = folderName.match(/_?(\d{8}_\d{6})$/);
   if (timestampMatch) {
     const timestamp = timestampMatch[1];
@@ -78,17 +77,21 @@ function countJsonlLines(filePath: string): number {
 }
 
 /**
- * List all datasets for a specific generator.
+ * List all datasets grouped by expert.
+ * Returns Generator[] where each Generator represents an expert with its datasets.
  */
-export function listGeneratorDatasets(generatorName: string): Dataset[] {
-  const datasetsPath = getGeneratorDatasetsPath(generatorName);
+export function listGenerators(): Generator[] {
+  const datasetsRoot = getDatasetsRoot();
 
-  if (!fs.existsSync(datasetsPath)) {
+  if (!fs.existsSync(datasetsRoot)) {
+    console.error(`Datasets root not found: ${datasetsRoot}`);
     return [];
   }
 
-  const entries = fs.readdirSync(datasetsPath, { withFileTypes: true });
-  const datasets: Dataset[] = [];
+  const entries = fs.readdirSync(datasetsRoot, { withFileTypes: true });
+
+  // Group datasets by expert
+  const expertMap = new Map<string, Dataset[]>();
 
   for (const entry of entries) {
     if (!entry.isDirectory() || entry.name.startsWith('.')) {
@@ -100,10 +103,10 @@ export function listGeneratorDatasets(generatorName: string): Dataset[] {
       continue;
     }
 
-    const datasetPath = path.join(datasetsPath, entry.name);
+    const datasetPath = getDatasetPath(entry.name);
     const config = readDatasetConfig(datasetPath);
 
-    // Get task types from config (supports both task_types array and task_counts object)
+    // Get task types from config
     const taskTypes = config?.task_types
       ?? (config?.task_counts ? Object.keys(config.task_counts) : []);
 
@@ -111,58 +114,45 @@ export function listGeneratorDatasets(generatorName: string): Dataset[] {
     const dataJsonlPath = path.join(datasetPath, 'data.jsonl');
     const recordCount = countJsonlLines(dataJsonlPath);
 
-    datasets.push({
+    const dataset: Dataset = {
       name: entry.name,
-      generator: generatorName,
+      generator: expertToGenerator(parsed.expert),
       expert: parsed.expert,
       researcher: parsed.researcher,
       timestamp: parsed.timestamp,
       taskTypes,
       recordCount
-    });
+    };
+
+    // Group by expert
+    const existing = expertMap.get(parsed.expert) || [];
+    existing.push(dataset);
+    expertMap.set(parsed.expert, existing);
   }
 
-  // Sort by timestamp descending (newest first)
-  datasets.sort((a, b) => b.timestamp.localeCompare(a.timestamp));
-
-  return datasets;
-}
-
-/**
- * List all generators that have datasets.
- */
-export function listGenerators(): Generator[] {
-  const generatorsPath = getGeneratorsPath();
-
-  if (!fs.existsSync(generatorsPath)) {
-    return [];
-  }
-
-  const entries = fs.readdirSync(generatorsPath, { withFileTypes: true });
+  // Convert to Generator array
   const generators: Generator[] = [];
+  for (const [expertName, datasets] of expertMap) {
+    // Sort datasets by timestamp descending (newest first)
+    datasets.sort((a, b) => b.timestamp.localeCompare(a.timestamp));
 
-  for (const entry of entries) {
-    if (!entry.isDirectory() || entry.name.startsWith('.')) {
-      continue;
-    }
-
-    // Check if this generator has a datasets folder
-    const datasetsPath = path.join(generatorsPath, entry.name, 'datasets');
-    if (!fs.existsSync(datasetsPath)) {
-      continue;
-    }
-
-    const datasets = listGeneratorDatasets(entry.name);
-    if (datasets.length > 0) {
-      generators.push({
-        name: entry.name,
-        datasets
-      });
-    }
+    generators.push({
+      name: expertToGenerator(expertName),
+      datasets
+    });
   }
 
   // Sort by generator name
   generators.sort((a, b) => a.name.localeCompare(b.name));
 
   return generators;
+}
+
+/**
+ * List datasets for a specific expert/generator.
+ */
+export function listGeneratorDatasets(generatorName: string): Dataset[] {
+  const allGenerators = listGenerators();
+  const generator = allGenerators.find(g => g.name === generatorName);
+  return generator?.datasets || [];
 }

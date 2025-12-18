@@ -1,5 +1,5 @@
 /**
- * Generators path library - path utilities for locating datasets.
+ * Dataset path library - path utilities for locating datasets on Modal volume.
  *
  * Copyright (c) 2025 Tylt LLC. All Rights Reserved.
  */
@@ -7,53 +7,39 @@
 import path from 'path';
 
 /**
- * Get the repository root path.
- * Walks up from current directory to find the root.
+ * Root path for datasets on Modal volume.
+ * Volume is mounted at /datasets, datasets are at /training-data/datasets/
  */
-export function getRepoRoot(): string {
-  // In Next.js, process.cwd() is the project root
-  // We need to go up to the repo root (projects/dataset-viewer -> repo root)
-  return path.resolve(process.cwd(), '..', '..');
-}
+const DATASETS_ROOT = '/datasets/training-data/datasets';
 
 /**
- * Get path to adapters.yaml config file.
+ * Get the root path for all datasets.
  */
-export function getAdaptersConfigPath(): string {
-  return path.join(getRepoRoot(), 'config', 'adapters.yaml');
-}
-
-/**
- * Get path to generators directory.
- */
-export function getGeneratorsPath(): string {
-  return path.join(getRepoRoot(), 'projects', 'generators');
-}
-
-/**
- * Get path to a specific generator's datasets directory.
- */
-export function getGeneratorDatasetsPath(generatorName: string): string {
-  return path.join(getGeneratorsPath(), generatorName, 'datasets');
+export function getDatasetsRoot(): string {
+  return DATASETS_ROOT;
 }
 
 /**
  * Get path to a specific dataset directory.
+ * Datasets are stored flat: {expert}--{researcher}--{timestamp}/
  */
-export function getDatasetPath(
-  generatorName: string,
-  datasetName: string
-): string {
-  return path.join(getGeneratorDatasetsPath(generatorName), datasetName);
+export function getDatasetPath(datasetName: string): string {
+  return path.join(DATASETS_ROOT, datasetName);
 }
 
 /**
  * Get path to an image within a dataset.
  */
-export function getImagePath(
-  generatorName: string,
-  datasetName: string,
-  imagePath: string
-): string {
-  return path.join(getDatasetPath(generatorName, datasetName), imagePath);
+export function getImagePath(datasetName: string, imagePath: string): string {
+  return path.join(getDatasetPath(datasetName), imagePath);
+}
+
+/**
+ * Extract expert name from dataset name.
+ * Dataset format: {expert}--{researcher}--{timestamp}
+ */
+export function extractExpertFromDatasetName(datasetName: string): string {
+  const delimiter = '--';
+  const parts = datasetName.split(delimiter);
+  return parts[0] || datasetName;
 }

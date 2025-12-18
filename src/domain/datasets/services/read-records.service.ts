@@ -16,12 +16,12 @@ import type { RecordsQuery } from '../value-objects/records-query.value-object';
  * Does not iterate the whole file - stops after finding the record.
  */
 export async function readRecordByIndex(
-  generator: string,
+  _generator: string,
   dataset: string,
   index: number,
   file: 'data' | 'train' | 'val' = 'data'
 ): Promise<DataRecord | null> {
-  const datasetPath = getDatasetPath(generator, dataset);
+  const datasetPath = getDatasetPath(dataset);
   const filePath = path.join(datasetPath, `${file}.jsonl`);
 
   if (!fs.existsSync(filePath)) {
@@ -58,14 +58,14 @@ export async function readRecordByIndex(
  * Returns null if no matching record is found.
  */
 export async function findFilteredRecordIndex(
-  generator: string,
+  _generator: string,
   dataset: string,
   currentIndex: number,
   direction: 'next' | 'prev',
   taskTypes: Set<string>,
   file: 'data' | 'train' | 'val' = 'data'
 ): Promise<number | null> {
-  const datasetPath = getDatasetPath(generator, dataset);
+  const datasetPath = getDatasetPath(dataset);
   const filePath = path.join(datasetPath, `${file}.jsonl`);
 
   if (!fs.existsSync(filePath)) {
@@ -125,7 +125,7 @@ export async function findFilteredRecordIndex(
 export async function readRecords(
   query: RecordsQuery
 ): Promise<{ records: DataRecord[]; total: number }> {
-  const datasetPath = getDatasetPath(query.generator, query.dataset);
+  const datasetPath = getDatasetPath(query.dataset);
   const fileName = `${query.file ?? 'data'}.jsonl`;
   const filePath = path.join(datasetPath, fileName);
 

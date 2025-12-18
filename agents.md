@@ -89,7 +89,11 @@ This file is your "life update" journal for the maintainer.
 ## Commands
 
 ```bash
-# Development
+# Modal Deployment (production)
+modal deploy modal/app.py     # Deploy to Modal
+modal serve modal/app.py      # Run locally for testing
+
+# Local Development (deprecated - use Modal)
 npm run dev          # Start dev server (auto-kills port 3000)
 npm run build        # Production build
 npm run lint         # ESLint
@@ -99,6 +103,20 @@ npm run typecheck    # TypeScript check
 npm run precommit      # Check staged files
 npm run precommit:all  # Check all tracked files
 ```
+
+## Modal Deployment
+
+The app runs on Modal with auto wake/sleep. It reads datasets from the `claimhawk-lora-training` volume.
+
+**Access URL**: `https://claimhawk--dataset-viewer-web.modal.run`
+
+**Volume Mount**: `/datasets` → `claimhawk-lora-training` volume
+**Dataset Path**: `/datasets/training-data/datasets/{expert}--{researcher}--{timestamp}/`
+
+The app automatically:
+- Wakes on request (~15-30s cold start)
+- Sleeps after 5 minutes of inactivity
+- Reloads volume data on startup
 
 ## Architecture
 
@@ -142,8 +160,8 @@ Example URLs:
 
 ### Data Flow
 
-1. **Startup**: App reads `config/adapters.yaml` from repo root to get dataset naming conventions
-2. **Discovery**: `scan-generators.service.ts` walks `projects/generators/*/datasets/` to find generators and datasets
+1. **Startup**: Volume is mounted at `/datasets`, naming delimiter is hardcoded
+2. **Discovery**: `scan-generators.service.ts` scans `/datasets/training-data/datasets/` for flat dataset directories
 3. **Loading**: `read-records.service.ts` reads `data.jsonl` files and parses training records
 4. **API**: Next.js API routes expose `/api/datasets`, `/api/records`, and `/api/image/[...path]`
 5. **UI**: URL-based navigation with keyboard shortcuts (←/→ for prev/next record)
@@ -164,10 +182,10 @@ Coordinates use RU (Resolution Units) normalized to [0, 1000]:
 
 ### Configuration
 
-The app reads `config/adapters.yaml` from the repo root (two directories up from project). This file defines:
-- Expert-to-generator mappings
-- Dataset naming conventions (delimiter, timestamp format)
-- Expert labels and descriptions
+Configuration is embedded in the app for Modal deployment:
+- Dataset root: `/datasets/training-data/datasets` (Modal volume mount)
+- Naming delimiter: `--` (hardcoded in `adapters-config.lib.ts`)
+- Expert names are extracted from dataset folder names (e.g., `calendar--mike--20251202` → expert: `calendar`)
 
 ## Code Quality
 

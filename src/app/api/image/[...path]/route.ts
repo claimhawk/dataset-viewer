@@ -3,6 +3,7 @@
  *
  * Serves images from dataset directories.
  * Path format: /api/image/{generator}/{dataset}/{image_path}
+ * Note: generator is kept in URL for backwards compatibility but not used for path resolution.
  *
  * Copyright (c) 2025 Tylt LLC. All Rights Reserved.
  */
@@ -10,7 +11,7 @@
 import { NextRequest, NextResponse } from 'next/server';
 import fs from 'fs';
 import path from 'path';
-import { getGeneratorsPath } from '@/libs/paths/generators-path.lib';
+import { getDatasetsRoot, getImagePath } from '@/libs/paths/generators-path.lib';
 
 interface RouteParams {
   params: Promise<{ path: string[] }>;
@@ -29,22 +30,17 @@ export async function GET(
     );
   }
 
-  const [generator, dataset, ...imageParts] = pathParts;
+  // Format: generator/dataset/imagePath (generator kept for URL compatibility)
+  const [_generator, dataset, ...imageParts] = pathParts;
   const imagePath = imageParts.join('/');
 
-  // Construct full path
-  const fullPath = path.join(
-    getGeneratorsPath(),
-    generator,
-    'datasets',
-    dataset,
-    imagePath
-  );
+  // Construct full path using new flat structure
+  const fullPath = getImagePath(dataset, imagePath);
 
-  // Security: Ensure path is within generators directory
-  const generatorsPath = getGeneratorsPath();
+  // Security: Ensure path is within datasets directory
+  const datasetsRoot = getDatasetsRoot();
   const resolvedPath = path.resolve(fullPath);
-  if (!resolvedPath.startsWith(generatorsPath)) {
+  if (!resolvedPath.startsWith(datasetsRoot)) {
     return NextResponse.json(
       { error: 'Invalid path' },
       { status: 403 }
