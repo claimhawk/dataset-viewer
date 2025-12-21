@@ -10,7 +10,7 @@ import path from 'path';
  * Root path for datasets on Modal volume.
  * Volume is mounted at /datasets, datasets are at /training-data/datasets/
  */
-const DATASETS_ROOT = '/datasets/training-data/datasets';
+const DATASETS_ROOT = process.env.DATASETS_ROOT || '/datasets/training-data/datasets';
 
 /**
  * Get the root path for all datasets.
