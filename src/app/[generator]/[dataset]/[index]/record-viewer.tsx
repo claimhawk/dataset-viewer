@@ -41,9 +41,16 @@ export function RecordViewer({
   const [jumpValue, setJumpValue] = useState('');
 
   // Client-side task type filter state - initialized from URL or all active
-  const [activeTaskTypes, setActiveTaskTypes] = useState<Set<string>>(
-    () => new Set(initialFilter ?? datasetInfo.taskTypes)
-  );
+  // If initialFilter is empty or has invalid types, default to all
+  const [activeTaskTypes, setActiveTaskTypes] = useState<Set<string>>(() => {
+    if (!initialFilter || initialFilter.length === 0) {
+      return new Set(datasetInfo.taskTypes);
+    }
+    // Filter to only valid task types that exist in this dataset
+    const validTypes = initialFilter.filter(t => datasetInfo.taskTypes.includes(t));
+    // If no valid types remain, default to all
+    return validTypes.length > 0 ? new Set(validTypes) : new Set(datasetInfo.taskTypes);
+  });
 
   // Check if all task types are active
   const allActive = activeTaskTypes.size === datasetInfo.taskTypes.length;
@@ -186,9 +193,10 @@ export function RecordViewer({
     ? `/api/image/${generator}/${dataset}/${record.image}`
     : null;
 
-  // Get image size and tolerance from metadata
+  // Get image size, tolerance, and real coords from metadata
   const imageSize = record?.metadata?.image_size as [number, number] | undefined;
   const tolerance = record?.metadata?.tolerance as [number, number] | undefined;
+  const realCoords = record?.metadata?.real_coords as [number, number] | undefined;
 
   const displayName = generator.replace('-generator', '');
 
@@ -319,6 +327,7 @@ export function RecordViewer({
               toolCall={toolCall}
               imageSize={imageSize}
               tolerance={tolerance}
+              realCoords={realCoords}
             />
           )}
         </div>

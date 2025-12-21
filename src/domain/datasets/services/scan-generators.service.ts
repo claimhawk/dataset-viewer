@@ -77,6 +77,33 @@ function countJsonlLines(filePath: string): number {
 }
 
 /**
+ * Scan data.jsonl to extract unique task types from metadata.
+ * Fallback when config.json doesn't exist.
+ */
+function scanTaskTypesFromJsonl(filePath: string): string[] {
+  try {
+    const content = fs.readFileSync(filePath, 'utf-8');
+    const lines = content.split('\n').filter(line => line.trim());
+    const taskTypes = new Set<string>();
+
+    for (const line of lines) {
+      try {
+        const record = JSON.parse(line);
+        if (record.metadata?.task_type) {
+          taskTypes.add(record.metadata.task_type);
+        }
+      } catch {
+        // Skip malformed lines
+      }
+    }
+
+    return Array.from(taskTypes).sort();
+  } catch {
+    return [];
+  }
+}
+
+/**
  * List all datasets grouped by expert.
  * Returns Generator[] where each Generator represents an expert with its datasets.
  */
@@ -105,13 +132,18 @@ export function listGenerators(): Generator[] {
 
     const datasetPath = getDatasetPath(entry.name);
     const config = readDatasetConfig(datasetPath);
+    const dataJsonlPath = path.join(datasetPath, 'data.jsonl');
 
-    // Get task types from config
-    const taskTypes = config?.task_types
+    // Get task types from config, or scan jsonl as fallback
+    let taskTypes = config?.task_types
       ?? (config?.task_counts ? Object.keys(config.task_counts) : []);
 
+    // Fallback: scan data.jsonl for task types if config doesn't have them
+    if (taskTypes.length === 0) {
+      taskTypes = scanTaskTypesFromJsonl(dataJsonlPath);
+    }
+
     // Count records from data.jsonl
-    const dataJsonlPath = path.join(datasetPath, 'data.jsonl');
     const recordCount = countJsonlLines(dataJsonlPath);
 
     const dataset: Dataset = {

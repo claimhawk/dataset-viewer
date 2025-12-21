@@ -13,12 +13,14 @@ import { useRef, useEffect, useState, useCallback } from 'react';
 import { Button } from '@/ui/primitives/components/button.component';
 import type { ToolCall } from '@/domain/datasets/value-objects/tool-call.value-object';
 import { getActionColor } from '@/domain/datasets/value-objects/tool-call.value-object';
+import { ruToPixel } from '@/libs/coordinates/resolution-units.lib';
 
 interface ImageViewerProps {
   imageSrc: string | null;
   toolCall: ToolCall | null;
   imageSize?: [number, number];
   tolerance?: [number, number];
+  realCoords?: [number, number];
 }
 
 const ZOOM_LEVELS = [0.25, 0.5, 0.75, 1, 1.5, 2, 3, 4];
@@ -31,30 +33,32 @@ interface AnnotationParams {
   scale: number;
   offset: [number, number];
   tolerance?: [number, number];
+  realCoords?: [number, number];
 }
+
+// Colors for coordinate systems
+const RU_COLOR = '#3b82f6'; // Blue for RU coordinates
+const PX_COLOR = '#ef4444'; // Red for pixel coordinates
 
 /** Draw a single tool call annotation */
 function drawAnnotation(params: AnnotationParams): void {
-  const { ctx, toolCall, imageSize, scale, offset, tolerance } = params;
+  const { ctx, toolCall, imageSize, scale, offset, tolerance, realCoords } = params;
   const { action, coordinate, pixels, text } = toolCall.arguments;
-  const color = getActionColor(action);
-
-  // Convert RU (0-1000) to display coordinates
-  const ruScale = 1000 / Math.max(imageSize[0], imageSize[1]);
 
   ctx.save();
 
+  // Draw RU coordinate crosshair (blue)
   if (coordinate) {
-    const pixelX = coordinate[0] / ruScale;
-    const pixelY = coordinate[1] / ruScale;
+    const [pixelX, pixelY] = ruToPixel(coordinate as [number, number], imageSize);
     const displayX = pixelX * scale + offset[0];
     const displayY = pixelY * scale + offset[1];
 
     // Draw tolerance box if provided
     if (tolerance) {
-      const tolW = (tolerance[0] / ruScale) * scale;
-      const tolH = (tolerance[1] / ruScale) * scale;
-      ctx.strokeStyle = color;
+      const [tolPixelW, tolPixelH] = ruToPixel(tolerance as [number, number], imageSize);
+      const tolW = tolPixelW * scale;
+      const tolH = tolPixelH * scale;
+      ctx.strokeStyle = RU_COLOR;
       ctx.lineWidth = 1;
       ctx.setLineDash([4, 4]);
       ctx.strokeRect(
@@ -68,17 +72,27 @@ function drawAnnotation(params: AnnotationParams): void {
 
     // Draw based on action type
     if (action.includes('click') || action === 'mouse_move') {
-      drawCrosshair(ctx, displayX, displayY, color);
+      drawCrosshair(ctx, displayX, displayY, RU_COLOR);
     } else if (action === 'scroll' || action === 'hscroll') {
-      drawScrollArrow(ctx, displayX, displayY, color, action, pixels ?? 0);
+      drawScrollArrow(ctx, displayX, displayY, RU_COLOR, action, pixels ?? 0);
     } else if (action === 'left_click_drag') {
-      drawDragIndicator(ctx, displayX, displayY, color);
+      drawDragIndicator(ctx, displayX, displayY, RU_COLOR);
+    }
+  }
+
+  // Draw pixel coordinate crosshair (red)
+  if (realCoords) {
+    const displayX = realCoords[0] * scale + offset[0];
+    const displayY = realCoords[1] * scale + offset[1];
+
+    if (action.includes('click') || action === 'mouse_move') {
+      drawCrosshair(ctx, displayX, displayY, PX_COLOR);
     }
   }
 
   // Draw text indicator for type action
   if (action === 'type' && text) {
-    ctx.fillStyle = color;
+    ctx.fillStyle = RU_COLOR;
     ctx.font = 'bold 12px monospace';
     ctx.shadowColor = 'rgba(0,0,0,0.8)';
     ctx.shadowBlur = 3;
@@ -185,7 +199,8 @@ export function ImageViewer({
   imageSrc,
   toolCall,
   imageSize,
-  tolerance
+  tolerance,
+  realCoords
 }: ImageViewerProps): React.ReactElement {
   const canvasRef = useRef<HTMLCanvasElement>(null);
   const containerRef = useRef<HTMLDivElement>(null);
@@ -263,10 +278,11 @@ export function ImageViewer({
         imageSize: imgSize,
         scale,
         offset: [offsetX, offsetY],
-        tolerance
+        tolerance,
+        realCoords
       });
     }
-  }, [loadedImage, zoom, pan, toolCall, imageSize, tolerance]);
+  }, [loadedImage, zoom, pan, toolCall, imageSize, tolerance, realCoords]);
 
   // Redraw on changes
   useEffect(() => {
